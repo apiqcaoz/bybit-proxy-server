@@ -1,25 +1,23 @@
-// index.js
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-
+const express = require('express');
+const axios = require('axios');
 const app = express();
-app.use(cors());
 
-const BYBIT_BASE = "https://api.bybit.com";
+// GUNAKAN PORT DARI ENV
+const PORT = process.env.PORT || 8080;
 
-app.get("/v2/public/tickers", async (req, res) => {
+app.get('/price', async (req, res) => {
+  const { symbol } = req.query;
+  if (!symbol) return res.status(400).send("Missing symbol");
+
   try {
-    const response = await axios.get(`${BYBIT_BASE}/v2/public/tickers`);
+    const response = await axios.get(`https://api.bybit.com/v2/public/tickers?symbol=${symbol}`);
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.error("Error fetching data:", error.message);
+    res.status(500).send("Internal Server Error");
   }
 });
 
-// Untuk endpoint lain, tinggal tambah sesuai kebutuhan
-
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
