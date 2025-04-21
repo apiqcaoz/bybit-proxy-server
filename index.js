@@ -1,23 +1,27 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
+const port = process.env.PORT || 8080;
 
-// GUNAKAN PORT DARI ENV
-const PORT = process.env.PORT || 8080;
+// Cek koneksi
+app.get('/ping', (req, res) => {
+  res.send('Server aktif 🚀');
+});
 
-app.get('/price', async (req, res) => {
-  const { symbol } = req.query;
-  if (!symbol) return res.status(400).send("Missing symbol");
-
+// Proxy semua request dari /v5/* ke Bybit
+app.get('/v5/:section/:endpoint', async (req, res) => {
   try {
-    const response = await axios.get(`https://api.bybit.com/v2/public/tickers?symbol=${symbol}`);
+    const { section, endpoint } = req.params;
+    const query = new URLSearchParams(req.query).toString();
+    const bybitUrl = `https://api.bybit.com/v5/${section}/${endpoint}?${query}`;
+    
+    const response = await axios.get(bybitUrl);
     res.json(response.data);
   } catch (error) {
-    console.error("Error fetching data:", error.message);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ error: true, message: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
